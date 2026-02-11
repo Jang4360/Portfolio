@@ -26,22 +26,21 @@ interface ProjectModalProps {
     onClose: () => void;
 }
 
-type Tab = 'summary' | 'features' | 'troubleshooting';
+type Tab = 'features' | 'troubleshooting' | 'architecture';
 
 export default function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
-    const [activeTab, setActiveTab] = useState<Tab>('summary');
-    const [showArchitecture, setShowArchitecture] = useState(false);
+    const [activeTab, setActiveTab] = useState<Tab>('features');
 
     const tabContent = {
-        summary: project.summaryContent || project.description,
         features: project.features,
         troubleshooting: project.troubleshooting,
+        architecture: null, // Handled separately
     };
 
     const tabs = [
-        { id: 'summary' as Tab, label: 'Summary' },
         { id: 'features' as Tab, label: 'Detailed Features' },
         { id: 'troubleshooting' as Tab, label: 'Troubleshooting' },
+        { id: 'architecture' as Tab, label: 'Architecture Diagram' },
     ];
 
     return (
@@ -63,9 +62,10 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                         className="fixed inset-4 md:inset-10 lg:inset-20 bg-[#0a0a0a] rounded-xl shadow-2xl z-[101] overflow-hidden flex flex-col border border-white/[0.06]"
                     >
+                        {/* Close Button - Moved higher */}
                         <button
                             onClick={onClose}
-                            className="absolute top-4 right-4 z-10 p-2 bg-white/[0.06] hover:bg-white/[0.12] rounded-full transition-colors border border-white/[0.08]"
+                            className="absolute top-2 right-4 z-10 p-2 bg-white/[0.06] hover:bg-white/[0.12] rounded-full transition-colors border border-white/[0.08]"
                         >
                             <FiX size={24} className="text-white" />
                         </button>
@@ -73,15 +73,6 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                         <div className="flex flex-col md:flex-row h-full overflow-hidden">
                             {/* Left Column */}
                             <div className="w-full md:w-2/5 lg:w-1/3 bg-white/[0.02] p-6 md:p-8 overflow-y-auto border-r border-white/[0.06]">
-                                {project.coverImage && (
-                                    <motion.img
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        src={project.coverImage}
-                                        alt={project.name}
-                                        className="w-full h-48 md:h-64 object-cover rounded-lg mb-6 shadow-lg"
-                                    />
-                                )}
 
                                 <h2 className="text-3xl font-bold text-white mb-2">{project.name}</h2>
                                 <p className="text-white/40 mb-4 leading-relaxed text-sm">{project.tagline}</p>
@@ -111,29 +102,8 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                     )}
                                 </div>
 
-                                {/* Architecture Image */}
-                                {project.architectureImage && (
-                                    <div className="mb-6">
-                                        <button
-                                            onClick={() => setShowArchitecture(!showArchitecture)}
-                                            className="text-sm text-white/50 hover:text-white/70 transition-colors mb-2"
-                                        >
-                                            {showArchitecture ? 'Hide' : 'Show'} Architecture
-                                        </button>
-                                        {showArchitecture && (
-                                            <motion.img
-                                                initial={{ opacity: 0, height: 0 }}
-                                                animate={{ opacity: 1, height: 'auto' }}
-                                                src={project.architectureImage}
-                                                alt="Architecture"
-                                                className="w-full rounded-lg"
-                                            />
-                                        )}
-                                    </div>
-                                )}
-
                                 {/* Tech Stack */}
-                                <div>
+                                <div className="mb-6">
                                     <h3 className="text-[10px] font-bold text-white/30 uppercase mb-3" style={{ letterSpacing: "0.15em" }}>
                                         Tech Stack
                                     </h3>
@@ -148,6 +118,17 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                         ))}
                                     </div>
                                 </div>
+
+                                {/* Cover Image - Moved Here */}
+                                {project.coverImage && (
+                                    <motion.img
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        src={project.coverImage}
+                                        alt={project.name}
+                                        className="w-full h-auto object-cover rounded-lg shadow-lg"
+                                    />
+                                )}
                             </div>
 
                             {/* Right Column */}
@@ -157,11 +138,10 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                         <button
                                             key={tab.id}
                                             onClick={() => setActiveTab(tab.id)}
-                                            className={`flex-1 px-4 py-4 text-sm font-bold transition-colors relative ${
-                                                activeTab === tab.id
-                                                    ? 'text-white'
-                                                    : 'text-white/30 hover:text-white/60'
-                                            }`}
+                                            className={`flex-1 px-4 py-4 text-sm font-bold transition-colors relative ${activeTab === tab.id
+                                                ? 'text-white'
+                                                : 'text-white/30 hover:text-white/60'
+                                                }`}
                                         >
                                             {tab.label}
                                             {activeTab === tab.id && (
@@ -185,47 +165,63 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                             transition={{ duration: 0.2 }}
                                             className="prose prose-invert prose-lg max-w-none"
                                         >
-                                            {tabContent[activeTab] ? (
-                                                <ReactMarkdown
-                                                    components={{
-                                                        h1: ({ ...props }) => (
-                                                            <h1 className="text-3xl font-bold text-white mb-4" {...props} />
-                                                        ),
-                                                        h2: ({ ...props }) => (
-                                                            <h2 className="text-2xl font-bold text-white mb-3 mt-6" {...props} />
-                                                        ),
-                                                        h3: ({ ...props }) => (
-                                                            <h3 className="text-xl font-bold text-white mb-2 mt-4" {...props} />
-                                                        ),
-                                                        p: ({ ...props }) => (
-                                                            <p className="text-white/50 leading-relaxed mb-4" {...props} />
-                                                        ),
-                                                        ul: ({ ...props }) => (
-                                                            <ul className="list-disc list-inside text-white/50 mb-4 space-y-2" {...props} />
-                                                        ),
-                                                        ol: ({ ...props }) => (
-                                                            <ol className="list-decimal list-inside text-white/50 mb-4 space-y-2" {...props} />
-                                                        ),
-                                                        code: ({ inline, ...props }: any) =>
-                                                            inline ? (
-                                                                <code className="px-2 py-1 bg-white/[0.06] rounded text-white/70 text-sm" {...props} />
-                                                            ) : (
-                                                                <code className="block p-4 bg-white/[0.04] rounded-lg text-sm overflow-x-auto text-white/60" {...props} />
-                                                            ),
-                                                        blockquote: ({ ...props }) => (
-                                                            <blockquote className="border-l-2 border-white/20 pl-4 italic text-white/40 my-4" {...props} />
-                                                        ),
-                                                        a: ({ ...props }) => (
-                                                            <a className="text-white/70 hover:text-white underline" {...props} />
-                                                        ),
-                                                    }}
-                                                >
-                                                    {tabContent[activeTab]}
-                                                </ReactMarkdown>
+                                            {activeTab === 'architecture' ? (
+                                                project.architectureImage ? (
+                                                    <div className="flex flex-col items-center">
+                                                        <img
+                                                            src={project.architectureImage}
+                                                            alt="Architecture Diagram"
+                                                            className="w-full max-w-4xl rounded-lg shadow-2xl"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center text-white/20 py-12">
+                                                        <p className="text-lg">No architecture diagram available.</p>
+                                                    </div>
+                                                )
                                             ) : (
-                                                <div className="text-center text-white/20 py-12">
-                                                    <p className="text-lg">No content available for this section.</p>
-                                                </div>
+                                                tabContent[activeTab] ? (
+                                                    <ReactMarkdown
+                                                        components={{
+                                                            h1: ({ ...props }) => (
+                                                                <h1 className="text-3xl font-bold text-white mb-4" {...props} />
+                                                            ),
+                                                            h2: ({ ...props }) => (
+                                                                <h2 className="text-2xl font-bold text-white mb-3 mt-6" {...props} />
+                                                            ),
+                                                            h3: ({ ...props }) => (
+                                                                <h3 className="text-xl font-bold text-white mb-2 mt-4" {...props} />
+                                                            ),
+                                                            p: ({ ...props }) => (
+                                                                <p className="text-white/50 leading-relaxed mb-4" {...props} />
+                                                            ),
+                                                            ul: ({ ...props }) => (
+                                                                <ul className="list-disc list-inside text-white/50 mb-4 space-y-2" {...props} />
+                                                            ),
+                                                            ol: ({ ...props }) => (
+                                                                <ol className="list-decimal list-inside text-white/50 mb-4 space-y-2" {...props} />
+                                                            ),
+                                                            code: ({ inline, ...props }: any) =>
+                                                                inline ? (
+                                                                    <code className="px-2 py-1 bg-white/[0.06] rounded text-white/70 text-sm" {...props} />
+                                                                ) : (
+                                                                    <code className="block p-4 bg-white/[0.04] rounded-lg text-sm overflow-x-auto text-white/60" {...props} />
+                                                                ),
+                                                            blockquote: ({ ...props }) => (
+                                                                <blockquote className="border-l-2 border-white/20 pl-4 italic text-white/40 my-4" {...props} />
+                                                            ),
+                                                            a: ({ ...props }) => (
+                                                                <a className="text-white/70 hover:text-white underline" {...props} />
+                                                            ),
+                                                        }}
+                                                    >
+                                                        {tabContent[activeTab]}
+                                                    </ReactMarkdown>
+                                                ) : (
+                                                    <div className="text-center text-white/20 py-12">
+                                                        <p className="text-lg">No content available for this section.</p>
+                                                    </div>
+                                                )
                                             )}
                                         </motion.div>
                                     </AnimatePresence>

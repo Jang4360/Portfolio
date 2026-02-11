@@ -34,9 +34,7 @@ const getVisibleCount = (width: number): number => {
 
 export default function ProjectsContent({ projects, onProjectClick }: ProjectsContentProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [windowWidth, setWindowWidth] = useState(
-        typeof window !== "undefined" ? window.innerWidth : 1024
-    );
+    const [windowWidth, setWindowWidth] = useState(1024);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
     const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
     const [direction, setDirection] = useState(1);
@@ -134,22 +132,20 @@ export default function ProjectsContent({ projects, onProjectClick }: ProjectsCo
                     <button
                         onClick={goPrev}
                         disabled={!canGoPrev}
-                        className={`p-1.5 rounded-full transition-all duration-300 ${
-                            canGoPrev
+                        className={`p-1.5 rounded-full transition-all duration-300 ${canGoPrev
                                 ? "bg-white/[0.06] hover:bg-white/[0.12] text-white/60"
                                 : "bg-white/[0.03] text-white/15 cursor-not-allowed"
-                        }`}
+                            }`}
                     >
                         <ChevronLeft size={16} />
                     </button>
                     <button
                         onClick={goNext}
                         disabled={!canGoNext}
-                        className={`p-1.5 rounded-full transition-all duration-300 ${
-                            canGoNext
+                        className={`p-1.5 rounded-full transition-all duration-300 ${canGoNext
                                 ? "bg-white/[0.06] hover:bg-white/[0.12] text-white/60"
                                 : "bg-white/[0.03] text-white/15 cursor-not-allowed"
-                        }`}
+                            }`}
                     >
                         <ChevronRight size={16} />
                     </button>
@@ -165,13 +161,12 @@ export default function ProjectsContent({ projects, onProjectClick }: ProjectsCo
                         {projects.map((project) => (
                             <motion.div
                                 key={project.id}
-                                className={`flex-shrink-0 p-2 ${
-                                    visibleCount === 3
+                                className={`flex-shrink-0 p-2 ${visibleCount === 3
                                         ? "w-1/3"
                                         : visibleCount === 2
-                                        ? "w-1/2"
-                                        : "w-full"
-                                }`}
+                                            ? "w-1/2"
+                                            : "w-full"
+                                    }`}
                                 drag="x"
                                 dragConstraints={{ left: 0, right: 0 }}
                                 dragElastic={0.2}
@@ -245,11 +240,10 @@ export default function ProjectsContent({ projects, onProjectClick }: ProjectsCo
                                     setCurrentIndex(index);
                                     pauseAutoPlay();
                                 }}
-                                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                                    index === currentIndex
+                                className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentIndex
                                         ? "bg-white w-5"
                                         : "bg-white/30 hover:bg-white/50"
-                                }`}
+                                    }`}
                             />
                         )
                     )}

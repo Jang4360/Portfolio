@@ -163,26 +163,7 @@ export default function FullScreenPortfolio({ sections }: FullScreenPortfolioPro
                     </motion.h1>
                 </header>
 
-                {/* Left Side Labels */}
-                <div className="absolute left-8 top-1/2 -translate-y-1/2 z-20 hidden md:flex flex-col gap-3">
-                    {sections.map((section, i) => (
-                        <button
-                            key={`left-${section.id}`}
-                            onClick={() => handleLabelClick(i)}
-                            className={`flex items-center gap-2.5 text-xs font-extrabold uppercase transition-all duration-500 cursor-pointer ${
-                                i === activeIndex
-                                    ? "text-white translate-x-1"
-                                    : "text-white/25 hover:text-white/40"
-                            }`}
-                            style={{ letterSpacing: "0.15em" }}
-                        >
-                            {i === activeIndex && (
-                                <span className="text-white text-[10px]">&bull;</span>
-                            )}
-                            {section.label}
-                        </button>
-                    ))}
-                </div>
+                {/* Left Side Labels (Removed) */}
 
                 {/* Right Side Labels */}
                 <div className="absolute right-8 top-1/2 -translate-y-1/2 z-20 hidden md:flex flex-col gap-3 items-end">

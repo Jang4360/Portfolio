@@ -3,35 +3,67 @@ import { NotionToMarkdown } from 'notion-to-md';
 
 const notion = new Client({
     auth: process.env.NOTION_API_KEY,
+    notionVersion: '2022-06-28',
 });
 
 const n2m = new NotionToMarkdown({ notionClient: notion });
+
+// Helper to transform GitHub blob URLs to raw URLs
+const transformGithubUrl = (url: string) => {
+    if (!url) return '';
+    if (url.includes('github.com') && url.includes('/blob/')) {
+        return url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+    }
+    return url;
+};
 
 // ============================================
 // Project Database
 // ============================================
 
 export async function getProjects() {
-    const databaseId = process.env.NOTION_PROJECT_DATABASE_ID!;
+    let databaseId = process.env.NOTION_PROJECT_DATABASE_ID!;
+    // Format UUID if it's raw hex (32 chars)
+    if (databaseId && databaseId.length === 32) {
+        databaseId = `${databaseId.slice(0, 8)}-${databaseId.slice(8, 12)}-${databaseId.slice(12, 16)}-${databaseId.slice(16, 20)}-${databaseId.slice(20)}`;
+    }
 
-    const response = await notion.databases.query({
-        database_id: databaseId,
-    });
+    const response = await notion.request({
+        path: `databases/${databaseId}/query`,
+        method: 'post',
+    }) as any;
 
     const projects = await Promise.all(
         response.results.map(async (page: any) => {
             const pageContent = await getPageContent(page.id);
 
+            // Extract title safely - Logs showed Name is 'rich_text', not 'title'
+            let title = 'Untitled';
+            if (page.properties.Name?.rich_text?.length > 0) {
+                title = page.properties.Name.rich_text[0].plain_text;
+            } else if (page.properties.Name?.title?.length > 0) {
+                title = page.properties.Name.title[0].plain_text;
+            }
+
+            // Logs showed CoverImage/ArchitectureImage are 'url' type, not 'files'
+            const coverUrl = page.properties.CoverImage?.url ||
+                page.properties.CoverImage?.files?.[0]?.file?.url ||
+                page.properties.CoverImage?.files?.[0]?.external?.url || '';
+
+            const archUrl = page.properties.ArchitectureImage?.url ||
+                page.properties.ArchitectureImage?.files?.[0]?.file?.url ||
+                page.properties.ArchitectureImage?.files?.[0]?.external?.url || '';
+
             return {
                 id: page.id,
-                name: page.properties.Name?.title?.[0]?.plain_text || 'Untitled',
+                name: title,
                 slug: page.properties.Slug?.rich_text?.[0]?.plain_text || '',
                 tagline: page.properties.Tagline?.rich_text?.[0]?.plain_text || '',
                 period: page.properties.Period?.rich_text?.[0]?.plain_text || '',
                 techStack: page.properties.TechStack?.multi_select?.map((tag: any) => tag.name) || [],
                 role: page.properties.Role?.rich_text?.[0]?.plain_text || '',
-                coverImage: page.properties.CoverImage?.url || '',
-                architectureImage: page.properties.ArchitectureImage?.url || '',
+                coverImage: transformGithubUrl(coverUrl),
+                architectureImage: transformGithubUrl(archUrl),
                 description: page.properties.Description?.rich_text?.[0]?.plain_text || '',
                 repoLink: page.properties.RepoLink?.url || null,
                 ...pageContent,
@@ -47,17 +79,14 @@ export async function getProjects() {
 // ============================================
 
 export async function getCareer() {
-    const databaseId = process.env.NOTION_CAREER_DATABASE_ID!;
-
-    const response = await notion.databases.query({
-        database_id: databaseId,
-        sorts: [
-            {
-                property: 'Date',
-                direction: 'descending',
-            },
-        ],
-    });
+    let databaseId = process.env.NOTION_CAREER_DATABASE_ID!;
+    if (databaseId && databaseId.length === 32) {
+        databaseId = `${databaseId.slice(0, 8)}-${databaseId.slice(8, 12)}-${databaseId.slice(12, 16)}-${databaseId.slice(16, 20)}-${databaseId.slice(20)}`;
+    }
+    const response = await notion.request({
+        path: `databases/${databaseId}/query`,
+        method: 'post',
+    }) as any;
 
     const career = response.results.map((page: any) => ({
         id: page.id,
@@ -69,9 +98,9 @@ export async function getCareer() {
     }));
 
     const grouped = {
-        Education: career.filter(item => item.category === 'Education'),
-        Certificate: career.filter(item => item.category === 'Certificate'),
-        Award: career.filter(item => item.category === 'Award'),
+        Education: career.filter((item: any) => item.category === 'Education'),
+        Certificate: career.filter((item: any) => item.category === 'Certificate'),
+        Award: career.filter((item: any) => item.category === 'Award'),
     };
 
     return grouped;
@@ -82,17 +111,14 @@ export async function getCareer() {
 // ============================================
 
 export async function getSkills() {
-    const databaseId = process.env.NOTION_SKILLS_DATABASE_ID!;
-
-    const response = await notion.databases.query({
-        database_id: databaseId,
-        sorts: [
-            {
-                property: 'Order',
-                direction: 'ascending',
-            },
-        ],
-    });
+    let databaseId = process.env.NOTION_SKILLS_DATABASE_ID!;
+    if (databaseId && databaseId.length === 32) {
+        databaseId = `${databaseId.slice(0, 8)}-${databaseId.slice(8, 12)}-${databaseId.slice(12, 16)}-${databaseId.slice(16, 20)}-${databaseId.slice(20)}`;
+    }
+    const response = await notion.request({
+        path: `databases/${databaseId}/query`,
+        method: 'post',
+    }) as any;
 
     const skills = response.results.map((page: any) => ({
         id: page.id,
@@ -107,56 +133,54 @@ export async function getSkills() {
 }
 
 // ============================================
-// Block Parser
+// Block Parser (n2m)
 // ============================================
 
 export async function getPageContent(pageId: string) {
     try {
-        const blocks = await notion.blocks.children.list({
-            block_id: pageId,
-            page_size: 100,
-        });
+        const mdBlocks = await n2m.pageToMarkdown(pageId);
 
-        let currentSection: 'summary' | 'features' | 'troubleshooting' = 'summary';
+        let currentSection: 'features' | 'troubleshooting' | 'other' = 'other';
 
         const sections = {
-            summary: [] as any[],
             features: [] as any[],
             troubleshooting: [] as any[],
         };
 
-        for (const block of blocks.results) {
-            const blockData = block as any;
-
-            if (blockData.type === 'heading_1') {
-                const headingText = blockData.heading_1?.rich_text?.[0]?.plain_text || '';
-
-                if (
-                    headingText.toLowerCase().includes('detailed features') ||
-                    headingText.includes('상세 기능')
-                ) {
+        for (const block of mdBlocks) {
+            // Check headers to switch sections
+            if (block.type === 'heading_1' || block.type === 'heading_2' || block.type === 'heading_3') {
+                const text = block.parent.trim().toLowerCase();
+                if (text.includes('detailed features') || text.includes('상세 기능')) {
                     currentSection = 'features';
-                    continue;
-                } else if (
-                    headingText.toLowerCase().includes('troubleshooting') ||
-                    headingText.includes('트러블 슈팅')
-                ) {
+                    continue; // Skip the header itself if desired, or include it. 
+                    // User wanted header content? "h1상세기능 안에 넘버링만 가져오고" 
+                    // Let's include the header in the section so it looks complete, 
+                    // or skip if we want just the list. 
+                    // The user said "Detailed Feautres... content field inside page".
+                    // Let's keep the header IN the section for context, but usually we just want content.
+                    // Actually, the user's screenshot shows "상세 기능" as a header in the modal.
+                    // So we should probably SKIP adding the header block to the bucket if we render our own header.
+                } else if (text.includes('troubleshooting') || text.includes('트러블 슈팅')) {
                     currentSection = 'troubleshooting';
                     continue;
                 }
             }
 
-            sections[currentSection].push(blockData);
+            if (currentSection === 'features') {
+                sections.features.push(block);
+            } else if (currentSection === 'troubleshooting') {
+                sections.troubleshooting.push(block);
+            }
         }
 
-        const summaryMd = await convertBlocksToMarkdown(sections.summary);
-        const featuresMd = await convertBlocksToMarkdown(sections.features);
-        const troubleshootingMd = await convertBlocksToMarkdown(sections.troubleshooting);
+        const featuresMd = n2m.toMarkdownString(sections.features);
+        const troubleshootingMd = n2m.toMarkdownString(sections.troubleshooting);
 
         return {
-            summaryContent: summaryMd,
-            features: featuresMd,
-            troubleshooting: troubleshootingMd,
+            summaryContent: '', // Not using summary from content anymore
+            features: featuresMd.parent, // n2m returns object { parent: string }
+            troubleshooting: troubleshootingMd.parent,
         };
     } catch (error) {
         console.error('Error parsing page content:', error);
@@ -166,76 +190,6 @@ export async function getPageContent(pageId: string) {
             troubleshooting: '',
         };
     }
-}
-
-async function convertBlocksToMarkdown(blocks: any[]): Promise<string> {
-    if (blocks.length === 0) return '';
-
-    try {
-        const markdownBlocks = await Promise.all(
-            blocks.map(async (block) => {
-                return await blockToMarkdown(block);
-            })
-        );
-
-        return markdownBlocks.filter(Boolean).join('\n\n');
-    } catch (error) {
-        console.error('Error converting blocks to markdown:', error);
-        return '';
-    }
-}
-
-async function blockToMarkdown(block: any): Promise<string> {
-    const type = block.type;
-
-    try {
-        switch (type) {
-            case 'paragraph':
-                return richTextToPlainText(block.paragraph.rich_text);
-            case 'heading_1':
-                return `# ${richTextToPlainText(block.heading_1.rich_text)}`;
-            case 'heading_2':
-                return `## ${richTextToPlainText(block.heading_2.rich_text)}`;
-            case 'heading_3':
-                return `### ${richTextToPlainText(block.heading_3.rich_text)}`;
-            case 'bulleted_list_item':
-                return `- ${richTextToPlainText(block.bulleted_list_item.rich_text)}`;
-            case 'numbered_list_item':
-                return `1. ${richTextToPlainText(block.numbered_list_item.rich_text)}`;
-            case 'code':
-                const code = richTextToPlainText(block.code.rich_text);
-                const language = block.code.language || '';
-                return `\`\`\`${language}\n${code}\n\`\`\``;
-            case 'quote':
-                return `> ${richTextToPlainText(block.quote.rich_text)}`;
-            case 'callout':
-                return richTextToPlainText(block.callout.rich_text);
-            case 'divider':
-                return '---';
-            default:
-                return '';
-        }
-    } catch (error) {
-        console.error(`Error converting block type ${type}:`, error);
-        return '';
-    }
-}
-
-function richTextToPlainText(richText: any[]): string {
-    if (!richText || richText.length === 0) return '';
-
-    return richText
-        .map((text) => {
-            let plainText = text.plain_text;
-
-            if (text.annotations?.bold) plainText = `**${plainText}**`;
-            if (text.annotations?.italic) plainText = `*${plainText}*`;
-            if (text.annotations?.code) plainText = `\`${plainText}\``;
-            if (text.href) plainText = `[${plainText}](${text.href})`;
-
-            return plainText;
-        })
-        .join('');
 }
 
 export default notion;
