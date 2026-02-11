@@ -1,0 +1,25 @@
+# Agent Architecture - Git Ignore Rules
+
+# Temporary/Intermediate files
+.tmp/
+
+# Environment variables and credentials
+.env
+credentials.json
+token.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
