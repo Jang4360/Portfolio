@@ -1,126 +1,109 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiExternalLink, FiGithub } from 'react-icons/fi';
+import { FiX, FiGithub } from 'react-icons/fi';
 import ReactMarkdown from 'react-markdown';
 
+interface Project {
+    id: string;
+    name: string;
+    slug: string;
+    tagline: string;
+    period: string;
+    techStack: string[];
+    role: string;
+    coverImage: string;
+    architectureImage: string;
+    description: string;
+    repoLink: string | null;
+    summaryContent: string;
+    features: string;
+    troubleshooting: string;
+}
+
 interface ProjectModalProps {
-    project: {
-        id: string;
-        title: string;
-        summary: string;
-        coverImage: string;
-        demoUrl: string;
-        repoUrl: string;
-        techStack: string[];
-        summaryContent: string;
-        features: string;
-        troubleshooting: string;
-    };
+    project: Project;
     isOpen: boolean;
     onClose: () => void;
 }
 
 type Tab = 'summary' | 'features' | 'troubleshooting';
 
-/**
- * ProjectModal 컴포넌트
- * 
- * 구조:
- * - 좌측 (Left Col): 프로젝트 커버 이미지, 링크, 기술 스택
- * - 우측 (Right Col): 탭 UI로 Summary, Detailed Features, Troubleshooting 전환
- * 
- * Notion에서 파싱된 마크다운 컨텐츠를 탭별로 렌더링
- */
 export default function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
     const [activeTab, setActiveTab] = useState<Tab>('summary');
+    const [showArchitecture, setShowArchitecture] = useState(false);
 
-    // 탭별 컨텐츠 매핑
     const tabContent = {
-        summary: project.summaryContent || project.summary,
+        summary: project.summaryContent || project.description,
         features: project.features,
         troubleshooting: project.troubleshooting,
     };
 
-    // 탭 설정
     const tabs = [
-        { id: 'summary' as Tab, label: 'Summary', icon: '📝' },
-        { id: 'features' as Tab, label: 'Detailed Features', icon: '⚙️' },
-        { id: 'troubleshooting' as Tab, label: 'Troubleshooting', icon: '🔧' },
+        { id: 'summary' as Tab, label: 'Summary' },
+        { id: 'features' as Tab, label: 'Detailed Features' },
+        { id: 'troubleshooting' as Tab, label: 'Troubleshooting' },
     ];
 
     return (
         <AnimatePresence>
             {isOpen && (
                 <>
-                    {/* Backdrop (배경 오버레이) */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40"
+                        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]"
                         onClick={onClose}
                     />
 
-                    {/* Modal Container */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
                         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                        className="fixed inset-4 md:inset-10 lg:inset-20 bg-gray-900 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col"
+                        className="fixed inset-4 md:inset-10 lg:inset-20 bg-[#0a0a0a] rounded-xl shadow-2xl z-[101] overflow-hidden flex flex-col border border-white/[0.06]"
                     >
-                        {/* Close Button */}
                         <button
                             onClick={onClose}
-                            className="absolute top-4 right-4 z-10 p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors"
-                            aria-label="Close modal"
+                            className="absolute top-4 right-4 z-10 p-2 bg-white/[0.06] hover:bg-white/[0.12] rounded-full transition-colors border border-white/[0.08]"
                         >
                             <FiX size={24} className="text-white" />
                         </button>
 
-                        {/* Content Grid: 좌측 + 우측 */}
                         <div className="flex flex-col md:flex-row h-full overflow-hidden">
-
-                            {/* ========================================
-                  LEFT COLUMN: 프로젝트 정보
-                  ======================================== */}
-                            <div className="w-full md:w-2/5 lg:w-1/3 bg-gray-800 p-6 md:p-8 overflow-y-auto">
-                                {/* 프로젝트 커버 이미지 */}
+                            {/* Left Column */}
+                            <div className="w-full md:w-2/5 lg:w-1/3 bg-white/[0.02] p-6 md:p-8 overflow-y-auto border-r border-white/[0.06]">
                                 {project.coverImage && (
                                     <motion.img
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         src={project.coverImage}
-                                        alt={project.title}
+                                        alt={project.name}
                                         className="w-full h-48 md:h-64 object-cover rounded-lg mb-6 shadow-lg"
                                     />
                                 )}
 
-                                {/* 프로젝트 제목 */}
-                                <h2 className="text-3xl font-bold text-white mb-4">{project.title}</h2>
+                                <h2 className="text-3xl font-bold text-white mb-2">{project.name}</h2>
+                                <p className="text-white/40 mb-4 leading-relaxed text-sm">{project.tagline}</p>
 
-                                {/* 프로젝트 요약 */}
-                                <p className="text-gray-300 mb-6 leading-relaxed">{project.summary}</p>
-
-                                {/* 링크 버튼들 */}
-                                <div className="flex gap-3 mb-6">
-                                    {project.demoUrl && (
-                                        <a
-                                            href={project.demoUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-white font-medium"
-                                        >
-                                            <FiExternalLink size={18} />
-                                            Demo
-                                        </a>
+                                {/* Period & Role */}
+                                <div className="flex flex-col gap-1 mb-4 text-sm text-white/30">
+                                    {project.period && (
+                                        <span>Period: {project.period}</span>
                                     )}
-                                    {project.repoUrl && (
+                                    {project.role && (
+                                        <span>Role: {project.role}</span>
+                                    )}
+                                </div>
+
+                                {/* Links */}
+                                <div className="flex gap-3 mb-6">
+                                    {project.repoLink && (
                                         <a
-                                            href={project.repoUrl}
+                                            href={project.repoLink}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-white font-medium"
+                                            className="flex items-center gap-2 px-4 py-2 bg-white/[0.06] hover:bg-white/[0.12] rounded-lg transition-colors text-white/70 font-medium border border-white/[0.08]"
                                         >
                                             <FiGithub size={18} />
                                             Repo
@@ -128,16 +111,37 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                     )}
                                 </div>
 
-                                {/* 기술 스택 */}
+                                {/* Architecture Image */}
+                                {project.architectureImage && (
+                                    <div className="mb-6">
+                                        <button
+                                            onClick={() => setShowArchitecture(!showArchitecture)}
+                                            className="text-sm text-white/50 hover:text-white/70 transition-colors mb-2"
+                                        >
+                                            {showArchitecture ? 'Hide' : 'Show'} Architecture
+                                        </button>
+                                        {showArchitecture && (
+                                            <motion.img
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                src={project.architectureImage}
+                                                alt="Architecture"
+                                                className="w-full rounded-lg"
+                                            />
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Tech Stack */}
                                 <div>
-                                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                                    <h3 className="text-[10px] font-bold text-white/30 uppercase mb-3" style={{ letterSpacing: "0.15em" }}>
                                         Tech Stack
                                     </h3>
                                     <div className="flex flex-wrap gap-2">
                                         {project.techStack.map((tech) => (
                                             <span
                                                 key={tech}
-                                                className="px-3 py-1 bg-blue-600/20 border border-blue-500/30 rounded-full text-sm text-blue-300 font-medium"
+                                                className="px-3 py-1 bg-white/[0.06] border border-white/[0.1] rounded-full text-xs text-white/50 font-medium"
                                             >
                                                 {tech}
                                             </span>
@@ -146,30 +150,24 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                 </div>
                             </div>
 
-                            {/* ========================================
-                  RIGHT COLUMN: 탭 컨텐츠
-                  ======================================== */}
+                            {/* Right Column */}
                             <div className="flex-1 flex flex-col overflow-hidden">
-
-                                {/* Tab Navigation */}
-                                <div className="flex border-b border-gray-700 bg-gray-800/50">
+                                <div className="flex border-b border-white/[0.06] bg-white/[0.02]">
                                     {tabs.map((tab) => (
                                         <button
                                             key={tab.id}
                                             onClick={() => setActiveTab(tab.id)}
-                                            className={`flex-1 px-4 py-4 font-semibold transition-colors relative ${activeTab === tab.id
-                                                    ? 'text-white bg-gray-900/50'
-                                                    : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
-                                                }`}
+                                            className={`flex-1 px-4 py-4 text-sm font-bold transition-colors relative ${
+                                                activeTab === tab.id
+                                                    ? 'text-white'
+                                                    : 'text-white/30 hover:text-white/60'
+                                            }`}
                                         >
-                                            <span className="mr-2">{tab.icon}</span>
                                             {tab.label}
-
-                                            {/* Active Indicator */}
                                             {activeTab === tab.id && (
                                                 <motion.div
                                                     layoutId="activeTab"
-                                                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"
+                                                    className="absolute bottom-0 left-0 right-0 h-[1px] bg-white/60"
                                                     transition={{ type: 'spring', damping: 30, stiffness: 300 }}
                                                 />
                                             )}
@@ -177,7 +175,6 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                     ))}
                                 </div>
 
-                                {/* Tab Content */}
                                 <div className="flex-1 overflow-y-auto p-6 md:p-8">
                                     <AnimatePresence mode="wait">
                                         <motion.div
@@ -191,47 +188,43 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                             {tabContent[activeTab] ? (
                                                 <ReactMarkdown
                                                     components={{
-                                                        // 마크다운 컴포넌트 커스터마이징
-                                                        h1: ({ node, ...props }) => (
+                                                        h1: ({ ...props }) => (
                                                             <h1 className="text-3xl font-bold text-white mb-4" {...props} />
                                                         ),
-                                                        h2: ({ node, ...props }) => (
+                                                        h2: ({ ...props }) => (
                                                             <h2 className="text-2xl font-bold text-white mb-3 mt-6" {...props} />
                                                         ),
-                                                        h3: ({ node, ...props }) => (
+                                                        h3: ({ ...props }) => (
                                                             <h3 className="text-xl font-bold text-white mb-2 mt-4" {...props} />
                                                         ),
-                                                        p: ({ node, ...props }) => (
-                                                            <p className="text-gray-300 leading-relaxed mb-4" {...props} />
+                                                        p: ({ ...props }) => (
+                                                            <p className="text-white/50 leading-relaxed mb-4" {...props} />
                                                         ),
-                                                        ul: ({ node, ...props }) => (
-                                                            <ul className="list-disc list-inside text-gray-300 mb-4 space-y-2" {...props} />
+                                                        ul: ({ ...props }) => (
+                                                            <ul className="list-disc list-inside text-white/50 mb-4 space-y-2" {...props} />
                                                         ),
-                                                        ol: ({ node, ...props }) => (
-                                                            <ol className="list-decimal list-inside text-gray-300 mb-4 space-y-2" {...props} />
+                                                        ol: ({ ...props }) => (
+                                                            <ol className="list-decimal list-inside text-white/50 mb-4 space-y-2" {...props} />
                                                         ),
-                                                        code: ({ node, inline, ...props }: any) =>
+                                                        code: ({ inline, ...props }: any) =>
                                                             inline ? (
-                                                                <code className="px-2 py-1 bg-gray-800 rounded text-blue-300 text-sm" {...props} />
+                                                                <code className="px-2 py-1 bg-white/[0.06] rounded text-white/70 text-sm" {...props} />
                                                             ) : (
-                                                                <code className="block p-4 bg-gray-800 rounded-lg text-sm overflow-x-auto" {...props} />
+                                                                <code className="block p-4 bg-white/[0.04] rounded-lg text-sm overflow-x-auto text-white/60" {...props} />
                                                             ),
-                                                        blockquote: ({ node, ...props }) => (
-                                                            <blockquote className="border-l-4 border-blue-500 pl-4 italic text-gray-400 my-4" {...props} />
+                                                        blockquote: ({ ...props }) => (
+                                                            <blockquote className="border-l-2 border-white/20 pl-4 italic text-white/40 my-4" {...props} />
                                                         ),
-                                                        a: ({ node, ...props }) => (
-                                                            <a className="text-blue-400 hover:text-blue-300 underline" {...props} />
+                                                        a: ({ ...props }) => (
+                                                            <a className="text-white/70 hover:text-white underline" {...props} />
                                                         ),
                                                     }}
                                                 >
                                                     {tabContent[activeTab]}
                                                 </ReactMarkdown>
                                             ) : (
-                                                <div className="text-center text-gray-500 py-12">
-                                                    <p className="text-lg">이 섹션에는 아직 내용이 없습니다.</p>
-                                                    <p className="text-sm mt-2">
-                                                        Notion 페이지에서 &quot;{tabs.find(t => t.id === activeTab)?.label}&quot; 섹션을 추가해주세요.
-                                                    </p>
+                                                <div className="text-center text-white/20 py-12">
+                                                    <p className="text-lg">No content available for this section.</p>
                                                 </div>
                                             )}
                                         </motion.div>
