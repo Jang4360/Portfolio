@@ -155,14 +155,51 @@ export async function getSkills() {
         method: 'post',
     }) as any;
 
-    const skills = response.results.map((page: any) => ({
-        id: page.id,
-        name: page.properties.Name?.title?.[0]?.plain_text || 'Untitled',
-        proficiency: page.properties.Proficiency?.number || 3,
-        description: page.properties.Description?.rich_text?.[0]?.plain_text || '',
-        icon: page.properties.Icon?.files?.[0]?.file?.url || page.properties.Icon?.files?.[0]?.external?.url || '',
-        category: page.properties.Category?.select?.name || 'Other',
-    }));
+    const skills = response.results.map((page: any) => {
+        // Find the title property dynamically
+        let nameText = 'Untitled';
+        for (const key of Object.keys(page.properties)) {
+            const prop = page.properties[key];
+            if (prop.type === 'title' && prop.title?.length > 0) {
+                nameText = prop.title[0].plain_text;
+                break;
+            }
+        }
+
+        // Level: could be select with star emojis, number, or rich_text
+        let level = 0;
+        const levelProp = page.properties.Level || page.properties.Proficiency;
+        if (levelProp?.select?.name) {
+            // Count star emojis (⭐ or ★)
+            const name = levelProp.select.name;
+            level = (name.match(/⭐/g) || []).length || (name.match(/★/g) || []).length || parseInt(name) || 0;
+        } else if (levelProp?.number != null) {
+            level = levelProp.number;
+        } else if (levelProp?.rich_text?.[0]?.plain_text) {
+            const text = levelProp.rich_text[0].plain_text;
+            level = (text.match(/⭐/g) || []).length || (text.match(/★/g) || []).length || parseInt(text) || 0;
+        }
+
+        // IconURL: try url type, then rich_text, then files
+        const iconUrl = page.properties.IconURL?.url
+            || page.properties.IconURL?.rich_text?.[0]?.plain_text
+            || page.properties.Icon?.files?.[0]?.file?.url
+            || page.properties.Icon?.files?.[0]?.external?.url
+            || '';
+
+        return {
+            id: page.id,
+            name: nameText,
+            level,
+            category: page.properties.Type?.select?.name
+                || page.properties.Category?.select?.name
+                || 'Other',
+            detail: page.properties.Detail?.rich_text?.[0]?.plain_text
+                || page.properties.Description?.rich_text?.[0]?.plain_text
+                || '',
+            iconUrl: transformGithubUrl(iconUrl),
+        };
+    });
 
     return skills;
 }

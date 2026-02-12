@@ -60,7 +60,7 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
                         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                        className="fixed inset-4 md:inset-10 lg:inset-20 bg-[#0a0a0a] rounded-xl shadow-2xl z-[101] overflow-hidden flex flex-col border border-white/[0.06]"
+                        className="fixed inset-4 md:inset-10 lg:inset-20 bg-[#0a0a0a] rounded-xl shadow-2xl z-[101] overflow-hidden flex flex-col border border-[#444]"
                     >
                         {/* Close Button */}
                         <button
@@ -75,10 +75,10 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                             <div className="w-full md:w-2/5 lg:w-1/3 bg-white/[0.02] p-6 md:p-8 overflow-y-auto border-r border-white/[0.06]">
 
                                 <h2 className="text-3xl font-bold text-white mb-2">{project.name}</h2>
-                                <p className="text-white/40 mb-4 leading-relaxed text-sm">{project.tagline}</p>
+                                <p className="text-lg mb-4 leading-relaxed" style={{ color: '#F5F5F5' }}>{project.tagline}</p>
 
                                 {/* Period & Role */}
-                                <div className="flex flex-col gap-1 mb-4 text-sm text-white/30">
+                                <div className="flex flex-col gap-1 mb-4 text-sm" style={{ color: '#F5F5F5' }}>
                                     {project.period && (
                                         <span>Period: {project.period}</span>
                                     )}

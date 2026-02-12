@@ -44,9 +44,9 @@ interface CareerGroup {
 interface Skill {
     id: string;
     name: string;
-    proficiency: number;
-    description: string;
-    icon: string;
+    level: number;
+    detail: string;
+    iconUrl: string;
     category: string;
 }
 
@@ -87,7 +87,7 @@ export default function Home({ projects, career, skills }: HomeProps) {
             id: 'skills',
             label: 'SKILLS',
             bgImage: '/images/background/skills.jpg',
-            content: <SkillsContent />,
+            content: <SkillsContent skills={skills} />,
         },
     ];
 

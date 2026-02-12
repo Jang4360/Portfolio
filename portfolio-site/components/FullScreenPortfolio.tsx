@@ -142,10 +142,12 @@ export default function FullScreenPortfolio({ sections }: FullScreenPortfolioPro
                                 className="absolute inset-0 bg-cover bg-center"
                                 style={{
                                     backgroundImage: `url('${section.bgImage}')`,
-                                    filter: "brightness(0.15) blur(1px)",
+                                    // Modified brightness here: 0.15 -> 0.4
+                                    filter: "brightness(0.4) blur(1px)",
                                 }}
                             />
-                            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
+                            {/* Modified gradient opacity: from-black/70 -> from-black/50, via-black/50 -> via-black/20, to-black/80 -> to-black/60 */}
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/60" />
                         </div>
                     ))}
                 </div>
@@ -163,19 +165,16 @@ export default function FullScreenPortfolio({ sections }: FullScreenPortfolioPro
                     </motion.h1>
                 </header>
 
-                {/* Left Side Labels (Removed) */}
-
                 {/* Right Side Labels */}
                 <div className="absolute right-8 top-1/2 -translate-y-1/2 z-20 hidden md:flex flex-col gap-3 items-end">
                     {sections.map((section, i) => (
                         <button
                             key={`right-${section.id}`}
                             onClick={() => handleLabelClick(i)}
-                            className={`flex items-center gap-2.5 text-xs font-extrabold uppercase transition-all duration-500 cursor-pointer ${
-                                i === activeIndex
+                            className={`flex items-center gap-2.5 text-xs font-extrabold uppercase transition-all duration-500 cursor-pointer ${i === activeIndex
                                     ? "text-white -translate-x-1"
                                     : "text-white/25 hover:text-white/40"
-                            }`}
+                                }`}
                             style={{ letterSpacing: "0.15em" }}
                         >
                             {section.label}
@@ -225,9 +224,8 @@ export default function FullScreenPortfolio({ sections }: FullScreenPortfolioPro
                         <button
                             key={`dot-${i}`}
                             onClick={() => handleLabelClick(i)}
-                            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                                i === activeIndex ? "bg-white w-6" : "bg-white/30"
-                            }`}
+                            className={`w-2 h-2 rounded-full transition-all duration-300 ${i === activeIndex ? "bg-white w-6" : "bg-white/30"
+                                }`}
                         />
                     ))}
                 </div>

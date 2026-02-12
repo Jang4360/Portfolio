@@ -193,15 +193,15 @@ export default function ProjectsContent({ projects, onProjectClick }: ProjectsCo
                                     )}
 
                                     {/* Content */}
-                                    <h4 className="text-base font-bold text-white mb-1" style={{ letterSpacing: "0.02em" }}>
+                                    <h4 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: "0.02em" }}>
                                         {project.name}
                                     </h4>
-                                    <p className="text-white/35 text-xs mb-3 line-clamp-2">
+                                    <p className="text-base mb-3 line-clamp-2" style={{ color: '#F5F5F5' }}>
                                         {project.tagline}
                                     </p>
 
                                     {/* Period & Role */}
-                                    <div className="flex items-center gap-2 text-[10px] text-white/25 mb-3 uppercase" style={{ letterSpacing: "0.05em" }}>
+                                    <div className="flex items-center gap-2 text-sm mb-3 uppercase" style={{ letterSpacing: "0.05em", color: '#F5F5F5' }}>
                                         {project.period && <span>{project.period}</span>}
                                         {project.period && project.role && <span className="text-white/15">|</span>}
                                         {project.role && <span>{project.role}</span>}
