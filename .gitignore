@@ -23,3 +23,6 @@ env/
 *.swp
 *.swo
 
+.next/
+node_modules/
+.claude/

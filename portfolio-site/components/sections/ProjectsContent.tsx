@@ -177,7 +177,7 @@ export default function ProjectsContent({ projects, onProjectClick }: ProjectsCo
                             >
                                 <div
                                     onClick={() => onProjectClick(project)}
-                                    className="relative overflow-hidden rounded-xl p-5 h-full bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] cursor-pointer transition-all duration-500 hover:bg-white/[0.07] hover:border-white/[0.12]"
+                                    className="relative overflow-hidden rounded-xl p-5 h-full bg-white/[0.03] backdrop-blur-sm border border-white/[0.12] cursor-pointer transition-all duration-500 hover:bg-white/[0.07] hover:border-white/[0.2]"
                                 >
                                     {/* Cover Image */}
                                     {project.coverImage && (

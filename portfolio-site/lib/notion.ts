@@ -88,19 +88,54 @@ export async function getCareer() {
         method: 'post',
     }) as any;
 
-    const career = response.results.map((page: any) => ({
+    const career = response.results.map((page: any) => {
+        // Try multiple strategies to get the title
+        let titleText = 'Untitled';
+
+        // Strategy 1: Look for "Title" property (rich_text or title type)
+        if (page.properties.Title?.rich_text?.[0]?.plain_text) {
+            titleText = page.properties.Title.rich_text[0].plain_text;
+        } else if (page.properties.Title?.title?.[0]?.plain_text) {
+            titleText = page.properties.Title.title[0].plain_text;
+        }
+        // Strategy 2: Look for any property of type "title" with content
+        if (titleText === 'Untitled') {
+            for (const key of Object.keys(page.properties)) {
+                const prop = page.properties[key];
+                if (prop.type === 'title' && prop.title?.length > 0) {
+                    titleText = prop.title[0].plain_text;
+                    break;
+                }
+            }
+        }
+        // Strategy 3: Look for "Name" property
+        if (titleText === 'Untitled') {
+            if (page.properties.Name?.rich_text?.[0]?.plain_text) {
+                titleText = page.properties.Name.rich_text[0].plain_text;
+            } else if (page.properties.Name?.title?.[0]?.plain_text) {
+                titleText = page.properties.Name.title[0].plain_text;
+            }
+        }
+
+        return {
         id: page.id,
-        title: page.properties.Name?.title?.[0]?.plain_text || 'Untitled',
+        title: titleText,
         category: page.properties.Category?.select?.name || 'Other',
-        date: page.properties.Date?.date?.start || '',
+        date: page.properties.Date?.rich_text?.[0]?.plain_text
+            || page.properties.Date?.date?.start
+            || '',
         organization: page.properties.Organization?.rich_text?.[0]?.plain_text || '',
-        description: page.properties.Description?.rich_text?.[0]?.plain_text || '',
-    }));
+        description: page.properties.Description?.rich_text?.[0]?.plain_text
+            || page.properties.Description?.title?.[0]?.plain_text
+            || '',
+    };
+    });
 
     const grouped = {
         Education: career.filter((item: any) => item.category === 'Education'),
         Certificate: career.filter((item: any) => item.category === 'Certificate'),
         Award: career.filter((item: any) => item.category === 'Award'),
+        Language: career.filter((item: any) => item.category === 'Language'),
     };
 
     return grouped;

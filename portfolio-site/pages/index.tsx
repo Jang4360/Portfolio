@@ -38,6 +38,7 @@ interface CareerGroup {
     Education: CareerItem[];
     Certificate: CareerItem[];
     Award: CareerItem[];
+    Language: CareerItem[];
 }
 
 interface Skill {
@@ -106,7 +107,7 @@ export default function Home({ projects, career, skills }: HomeProps) {
 }
 
 export const getStaticProps: GetStaticProps<HomeProps> = async () => {
-    const emptyCareer = { Education: [], Certificate: [], Award: [] };
+    const emptyCareer = { Education: [], Certificate: [], Award: [], Language: [] };
 
     const [projects, career, skills] = await Promise.all([
         getProjects().catch((e) => { console.error('Projects fetch error:', e.message); return []; }),

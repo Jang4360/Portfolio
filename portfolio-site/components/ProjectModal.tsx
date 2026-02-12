@@ -62,12 +62,12 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                         className="fixed inset-4 md:inset-10 lg:inset-20 bg-[#0a0a0a] rounded-xl shadow-2xl z-[101] overflow-hidden flex flex-col border border-white/[0.06]"
                     >
-                        {/* Close Button - Moved higher */}
+                        {/* Close Button */}
                         <button
                             onClick={onClose}
-                            className="absolute top-2 right-4 z-10 p-2 bg-white/[0.06] hover:bg-white/[0.12] rounded-full transition-colors border border-white/[0.08]"
+                            className="absolute top-3 right-3 z-10 p-1.5 bg-white/[0.06] hover:bg-white/[0.12] rounded-full transition-colors border border-white/[0.08]"
                         >
-                            <FiX size={24} className="text-white" />
+                            <FiX size={16} className="text-white" />
                         </button>
 
                         <div className="flex flex-col md:flex-row h-full overflow-hidden">
@@ -184,34 +184,40 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                                     <ReactMarkdown
                                                         components={{
                                                             h1: ({ ...props }) => (
-                                                                <h1 className="text-3xl font-bold text-white mb-4" {...props} />
+                                                                <h1 className="text-2xl font-bold text-white mb-4 mt-2" {...props} />
                                                             ),
                                                             h2: ({ ...props }) => (
-                                                                <h2 className="text-2xl font-bold text-white mb-3 mt-6" {...props} />
+                                                                <h2 className="text-xl font-bold text-white mb-3 mt-8 pb-2 border-b border-white/[0.08]" {...props} />
                                                             ),
                                                             h3: ({ ...props }) => (
-                                                                <h3 className="text-xl font-bold text-white mb-2 mt-4" {...props} />
+                                                                <h3 className="text-lg font-bold text-white mb-2 mt-6" {...props} />
                                                             ),
                                                             p: ({ ...props }) => (
-                                                                <p className="text-white/50 leading-relaxed mb-4" {...props} />
+                                                                <p className="text-white/70 leading-relaxed mb-3 text-sm" {...props} />
                                                             ),
                                                             ul: ({ ...props }) => (
-                                                                <ul className="list-disc list-inside text-white/50 mb-4 space-y-2" {...props} />
+                                                                <ul className="list-disc pl-5 text-white/70 mb-4 space-y-1.5 text-sm" {...props} />
                                                             ),
                                                             ol: ({ ...props }) => (
-                                                                <ol className="list-decimal list-inside text-white/50 mb-4 space-y-2" {...props} />
+                                                                <ol className="list-decimal pl-5 text-white/70 mb-4 space-y-1.5 text-sm" {...props} />
+                                                            ),
+                                                            li: ({ ...props }) => (
+                                                                <li className="text-white/70 leading-relaxed" {...props} />
+                                                            ),
+                                                            strong: ({ ...props }) => (
+                                                                <strong className="text-white font-semibold" {...props} />
                                                             ),
                                                             code: ({ inline, ...props }: any) =>
                                                                 inline ? (
-                                                                    <code className="px-2 py-1 bg-white/[0.06] rounded text-white/70 text-sm" {...props} />
+                                                                    <code className="px-1.5 py-0.5 bg-white/[0.08] rounded text-white/80 text-[13px] font-mono" {...props} />
                                                                 ) : (
-                                                                    <code className="block p-4 bg-white/[0.04] rounded-lg text-sm overflow-x-auto text-white/60" {...props} />
+                                                                    <code className="block p-4 bg-white/[0.04] rounded-lg text-[13px] overflow-x-auto text-white/70 font-mono border border-white/[0.06]" {...props} />
                                                                 ),
                                                             blockquote: ({ ...props }) => (
-                                                                <blockquote className="border-l-2 border-white/20 pl-4 italic text-white/40 my-4" {...props} />
+                                                                <blockquote className="border-l-2 border-white/20 pl-4 italic text-white/50 my-4" {...props} />
                                                             ),
                                                             a: ({ ...props }) => (
-                                                                <a className="text-white/70 hover:text-white underline" {...props} />
+                                                                <a className="text-blue-400/80 hover:text-blue-300 underline underline-offset-2" {...props} />
                                                             ),
                                                         }}
                                                     >
