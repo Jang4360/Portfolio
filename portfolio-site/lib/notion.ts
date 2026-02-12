@@ -91,6 +91,27 @@ export async function getProjects() {
         })
     );
 
+    // Sort by Period (End Date descending)
+    projects.sort((a, b) => {
+        const getEndDate = (period: string) => {
+            if (!period) return 0;
+            const parts = period.split('-').map(p => p.trim());
+            if (parts.length < 2) return 0;
+
+            const endDateStr = parts[1];
+            if (endDateStr.toLowerCase() === 'present' || endDateStr.toLowerCase() === 'now') {
+                return new Date().getTime(); // Future/Now
+            }
+
+            // Parse "YYYY.MM"
+            const [year, month] = endDateStr.split('.').map(Number);
+            if (!year || !month) return 0;
+            return new Date(year, month - 1).getTime();
+        };
+
+        return getEndDate(b.period) - getEndDate(a.period);
+    });
+
     return projects;
 }
 
@@ -138,17 +159,17 @@ export async function getCareer() {
         }
 
         return {
-        id: page.id,
-        title: titleText,
-        category: page.properties.Category?.select?.name || 'Other',
-        date: page.properties.Date?.rich_text?.[0]?.plain_text
-            || page.properties.Date?.date?.start
-            || '',
-        organization: page.properties.Organization?.rich_text?.[0]?.plain_text || '',
-        description: page.properties.Description?.rich_text?.[0]?.plain_text
-            || page.properties.Description?.title?.[0]?.plain_text
-            || '',
-    };
+            id: page.id,
+            title: titleText,
+            category: page.properties.Category?.select?.name || 'Other',
+            date: page.properties.Date?.rich_text?.[0]?.plain_text
+                || page.properties.Date?.date?.start
+                || '',
+            organization: page.properties.Organization?.rich_text?.[0]?.plain_text || '',
+            description: page.properties.Description?.rich_text?.[0]?.plain_text
+                || page.properties.Description?.title?.[0]?.plain_text
+                || '',
+        };
     });
 
     const grouped = {

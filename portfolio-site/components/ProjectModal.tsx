@@ -39,11 +39,23 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
     const refreshImages = useCallback(async () => {
         if (!project?.id) return;
         try {
-            const res = await fetch(`/api/project-images?pageId=${project.id}&t=${Date.now()}`);
+            const timestamp = Date.now();
+            const res = await fetch(`/api/project-images?pageId=${project.id}&t=${timestamp}`);
             if (res.ok) {
                 const data = await res.json();
+                // Append timestamp to image URLs to bypass browser/CDN cache
+                // Check if URL already has query params
+                const appendTimestamp = (url: string) => {
+                    if (!url) return '';
+                    const separator = url.includes('?') ? '&' : '?';
+                    return `${url}${separator}t=${timestamp}`;
+                };
+
                 if (data.coverImage || data.architectureImage) {
-                    setFreshImages(data);
+                    setFreshImages({
+                        coverImage: appendTimestamp(data.coverImage),
+                        architectureImage: appendTimestamp(data.architectureImage)
+                    });
                 }
             }
         } catch { /* silently fail */ }
