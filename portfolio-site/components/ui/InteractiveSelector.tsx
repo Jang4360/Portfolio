@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export interface SelectorOption {
     title: string;
@@ -17,7 +18,6 @@ interface InteractiveSelectorProps {
 
 export const InteractiveSelector: React.FC<InteractiveSelectorProps> = ({ options }) => {
     const [activeIndex, setActiveIndex] = useState(0);
-    const [animatedOptions, setAnimatedOptions] = useState<number[]>([]);
     const [touchStart, setTouchStart] = useState<number | null>(null);
     const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
@@ -52,93 +52,120 @@ export const InteractiveSelector: React.FC<InteractiveSelectorProps> = ({ option
         }
     };
 
-    useEffect(() => {
-        const timers: NodeJS.Timeout[] = [];
-
-        options.forEach((_, i) => {
-            const timer = setTimeout(() => {
-                setAnimatedOptions(prev => [...prev, i]);
-            }, 100 * i);
-            timers.push(timer);
-        });
-
-        return () => {
-            timers.forEach(timer => clearTimeout(timer));
-        };
-    }, [options]);
-
     return (
-        <div className="flex flex-col items-center justify-center w-full min-h-[450px] text-white select-none"> {/* Reduced min-h from 500px to 450px */}
+        <div className="flex flex-col items-center justify-center w-full min-h-[450px] text-white select-none">
             <div
-                className="options flex w-full max-w-[1200px] h-[500px] items-stretch overflow-hidden relative gap-2" // Reduced h from 600px to 500px
+                className="flex w-full max-w-[1200px] h-[500px] items-stretch overflow-hidden relative gap-2"
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
             >
-                {options.map((option, index) => (
-                    <div
-                        key={index}
-                        className={`
-              relative flex flex-col justify-end overflow-hidden transition-all duration-700 ease-in-out rounded-2xl
-              ${activeIndex === index ? 'active flex-[7]' : 'flex-1'}
-            `}
-                        style={{
-                            backgroundImage: option.bgImage ? `url('${option.bgImage}')` : undefined,
-                            backgroundColor: option.bgColor || '#18181b',
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            cursor: 'pointer',
-                            opacity: animatedOptions.includes(index) ? 1 : 0,
-                            transform: animatedOptions.includes(index) ? 'translateX(0)' : 'translateX(-20px)',
-                            boxShadow: activeIndex === index
-                                ? '0 20px 60px rgba(0,0,0,0.50)'
-                                : '0 10px 30px rgba(0,0,0,0.30)',
-                            border: activeIndex === index ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.05)',
-                        }}
-                        onClick={() => handleOptionClick(index)}
-                    >
-                        {/* Gradient Overlay */}
-                        <div
-                            className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent pointer-events-none transition-opacity duration-700"
-                            style={{ opacity: activeIndex === index ? 1 : 0.8 }}
-                        />
+                {options.map((option, index) => {
+                    const isActive = activeIndex === index;
 
-                        {/* Label with icon and info */}
-                        <div className={`relative z-10 flex flex-col px-6 pb-6 pt-4 h-full justify-end transition-all duration-500 overflow-hidden ${activeIndex === index ? 'items-start' : 'items-center'}`}>
+                    return (
+                        <motion.div
+                            key={index}
+                            layout
+                            onClick={() => handleOptionClick(index)}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{
+                                layout: { duration: 0.5, type: "spring", stiffness: 100, damping: 20 },
+                                opacity: { duration: 0.5 },
+                            }}
+                            className={`relative flex flex-col overflow-hidden rounded-2xl cursor-pointer border ${isActive
+                                ? "flex-[7] border-white/20 shadow-2xl"
+                                : "flex-1 border-white/5 hover:border-white/10"
+                                }`}
+                            style={{
+                                backgroundImage: option.bgImage ? `url('${option.bgImage}')` : undefined,
+                                backgroundColor: option.bgColor || '#18181b',
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                            }}
+                        >
+                            {/* Gradient Overlay & Filter */}
+                            <motion.div
+                                className="absolute inset-0 pointer-events-none"
+                                animate={{
+                                    background: isActive
+                                        ? 'linear-gradient(to top, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.50) 50%, rgba(0,0,0,0.30) 100%)'
+                                        : 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.60) 50%, rgba(0,0,0,0.30) 100%)',
+                                    backdropFilter: 'brightness(0.65) saturate(0.8)' // Darkens and slightly desaturates
+                                }}
+                            />
 
-                            {/* Icon Container */}
-                            <div
-                                className={`flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 transition-all duration-500 shrink-0
-                  ${activeIndex === index ? 'w-12 h-12 mb-2' : 'w-10 h-10 mb-2'} 
-                `} // Reduced mb-4 to mb-2, and w-14 to w-12 for active state to reduce padding/size
-                            >
-                                {option.icon}
+                            {/* Content Wrapper */}
+                            <div className="relative z-10 w-full h-full">
+                                <AnimatePresence mode="popLayout">
+                                    {!isActive ? (
+                                        <motion.div
+                                            key={`inactive-${index}`}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="absolute inset-0 flex flex-col items-center justify-center px-4"
+                                        >
+                                            <div className="flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 w-10 h-10 mb-2 shrink-0">
+                                                {option.icon}
+                                            </div>
+                                            <h3 className="font-bold text-sm whitespace-nowrap rotate-0">{option.title}</h3>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            key={`active-${index}`}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="absolute inset-0 flex flex-col justify-between px-6 pb-6 pt-6"
+                                        >
+                                            {/* Icon - Top Left */}
+                                            <motion.div
+                                                initial={{ y: -20, opacity: 0 }}
+                                                animate={{ y: 0, opacity: 1 }}
+                                                transition={{ delay: 0.1 }}
+                                                className="flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 w-12 h-12 shrink-0"
+                                            >
+                                                {option.icon}
+                                            </motion.div>
+
+                                            {/* Content - Bottom */}
+                                            <div>
+                                                <motion.h3
+                                                    initial={{ y: 20, opacity: 0 }}
+                                                    animate={{ y: 0, opacity: 1 }}
+                                                    transition={{ delay: 0.2 }}
+                                                    className="font-bold text-[32px] mb-0.5 whitespace-nowrap"
+                                                >
+                                                    {option.title}
+                                                </motion.h3>
+
+                                                <motion.p
+                                                    initial={{ y: 20, opacity: 0 }}
+                                                    animate={{ y: 0, opacity: 1 }}
+                                                    transition={{ delay: 0.3 }}
+                                                    className="text-gray-300 text-[24px] mb-4"
+                                                >
+                                                    {option.description}
+                                                </motion.p>
+
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 0.4 }}
+                                                    className="w-full overflow-y-auto max-h-[300px] scrollbar-hide"
+                                                >
+                                                    {option.details}
+                                                </motion.div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
-
-                            {/* Text Content */}
-                            <div className={`transition-all duration-700 ease-in-out whitespace-nowrap w-full flex flex-col
-                 ${activeIndex === index ? 'opacity-100 flex-1 justify-end overflow-visible' : 'opacity-100 max-h-[80px] items-center'}
-              `}>
-                                <h3 className={`font-bold transition-all duration-300 ${activeIndex === index ? 'text-2xl mb-1' : 'text-sm rotate-0'}`}> {/* Reduced text-3xl to text-2xl, mb-2 to mb-1 */}
-                                    {option.title}
-                                </h3>
-
-                                <p className={`text-gray-300 transition-all duration-300 whitespace-normal ${activeIndex === index ? 'text-base mb-4' : 'text-xs opacity-0 hidden'}`}> {/* Reduced text-lg to text-base, mb-6 to mb-4 */}
-                                    {option.description}
-                                </p>
-
-                                {/* Detailed Content */}
-                                <div
-                                    className={`transition-all duration-700 delay-100 whitespace-normal w-full overflow-y-auto min-h-0 scrollbar-hide
-                    ${activeIndex === index ? 'opacity-100 translate-y-0 max-h-[300px]' : 'opacity-0 translate-y-4 absolute h-0'}
-                  `}
-                                >
-                                    {option.details}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                ))}
+                        </motion.div>
+                    );
+                })}
             </div>
         </div>
     );

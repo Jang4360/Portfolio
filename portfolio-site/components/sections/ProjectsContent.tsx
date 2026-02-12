@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -38,6 +38,39 @@ export default function ProjectsContent({ projects, onProjectClick }: ProjectsCo
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
     const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
     const [direction, setDirection] = useState(1);
+    const [refreshedImages, setRefreshedImages] = useState<Record<string, { coverImage: string; architectureImage: string }>>({});
+
+    const refreshProjectImage = useCallback(async (projectId: string) => {
+        try {
+            const res = await fetch(`/api/project-images?pageId=${projectId}&t=${Date.now()}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.coverImage || data.architectureImage) {
+                    setRefreshedImages(prev => ({ ...prev, [projectId]: data }));
+                }
+            }
+        } catch {
+            // silently fail
+        }
+    }, []);
+
+    const getCoverImage = useCallback((project: Project) => {
+        return refreshedImages[project.id]?.coverImage || project.coverImage;
+    }, [refreshedImages]);
+
+    // Proactively refresh all project images on mount
+    useEffect(() => {
+        projects.forEach((project) => {
+            if (project.coverImage || project.architectureImage) {
+                // Check if image URL is a Notion temporary URL (contains amazonaws or secure.notion)
+                const isTemporary = (url: string) =>
+                    url.includes('amazonaws.com') || url.includes('secure.notion');
+                if (isTemporary(project.coverImage) || isTemporary(project.architectureImage)) {
+                    refreshProjectImage(project.id);
+                }
+            }
+        });
+    }, [projects, refreshProjectImage]);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -180,17 +213,22 @@ export default function ProjectsContent({ projects, onProjectClick }: ProjectsCo
                                     className="relative overflow-hidden rounded-xl p-5 h-full bg-white/[0.03] backdrop-blur-sm border border-white/[0.12] cursor-pointer transition-all duration-500 hover:bg-white/[0.07] hover:border-white/[0.2]"
                                 >
                                     {/* Cover Image */}
-                                    {project.coverImage && (
-                                        <div className="relative w-full h-40 mb-4 rounded-lg overflow-hidden">
+                                    <div className="relative w-full h-40 mb-4 rounded-lg overflow-hidden">
+                                        {getCoverImage(project) ? (
                                             <img
-                                                src={project.coverImage}
+                                                src={getCoverImage(project)}
                                                 alt={project.name}
                                                 className="w-full h-full object-cover"
                                                 style={{ filter: "brightness(0.7)" }}
+                                                onError={() => {
+                                                    refreshProjectImage(project.id);
+                                                }}
                                             />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                                        </div>
-                                    )}
+                                        ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-white/[0.06] to-white/[0.02]" />
+                                        )}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                                    </div>
 
                                     {/* Content */}
                                     <h4 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: "0.02em" }}>

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { HeroTextEffect } from "../ui/HeroTextEffect";
+import { TextDisperse } from "../ui/TextDisperse";
 import { InteractiveSelector, SelectorOption } from "../ui/InteractiveSelector";
 import { FaServer, FaLightbulb, FaHourglassStart } from "react-icons/fa";
 
@@ -53,21 +53,29 @@ const values = [
     },
 ];
 
+const heroWords = [
+    { text: "측정", fontWeight: 900 },
+    { text: "가능한", fontWeight: 900 },
+    { text: "가치를", fontWeight: 900 },
+    { text: "만드는", fontWeight: 900 },
+    { text: "개발자", fontWeight: 900 },
+];
+
 export default function IntroContent() {
     const options: SelectorOption[] = [
         {
             title: values[0].title,
             description: values[0].subtitle,
             icon: <FaServer size={20} className="text-white" />,
-            bgImage: "/images/background/reliability.jpg",
+            bgImage: "/images/background/reliability.jpg?v=1",
             details: (
                 <div className="space-y-4 mt-2 w-full">
                     {values[0].items.map((item, idx) => (
                         <div key={idx} className="bg-black/60 p-3 rounded-lg backdrop-blur-md border border-white/10 shadow-lg">
                             {item.heading && (
-                                <h4 className="text-white font-bold text-xs mb-1">{item.heading}</h4>
+                                <h4 className="text-white font-bold text-[18px] mb-1">{item.heading}</h4>
                             )}
-                            <p className="text-gray-200 text-xs leading-relaxed opacity-90">{item.desc}</p>
+                            <p className="text-gray-200 text-sm leading-relaxed opacity-90">{item.desc}</p>
                         </div>
                     ))}
                 </div>
@@ -77,15 +85,15 @@ export default function IntroContent() {
             title: values[1].title,
             description: values[1].subtitle,
             icon: <FaLightbulb size={20} className="text-white" />,
-            bgImage: "/images/background/decision.jpg",
+            bgImage: "/images/background/decision.jpg?v=1",
             details: (
                 <div className="space-y-4 mt-2 w-full">
                     {values[1].items.map((item, idx) => (
                         <div key={idx} className="bg-black/60 p-3 rounded-lg backdrop-blur-md border border-white/10 shadow-lg">
                             {item.heading && (
-                                <h4 className="text-white font-bold text-xs mb-1">{item.heading}</h4>
+                                <h4 className="text-white font-bold text-[18px] mb-1">{item.heading}</h4>
                             )}
-                            <p className="text-gray-200 text-xs leading-relaxed opacity-90">{item.desc}</p>
+                            <p className="text-gray-200 text-sm leading-relaxed opacity-90">{item.desc}</p>
                         </div>
                     ))}
                 </div>
@@ -95,15 +103,15 @@ export default function IntroContent() {
             title: values[2].title,
             description: values[2].subtitle,
             icon: <FaHourglassStart size={20} className="text-white" />,
-            bgImage: "/images/background/consistency.jpg",
+            bgImage: "/images/background/consistency.jpg?v=1",
             details: (
                 <div className="space-y-4 mt-2 w-full">
                     {values[2].items.map((item, idx) => (
                         <div key={idx} className="bg-black/60 p-3 rounded-lg backdrop-blur-md border border-white/10 shadow-lg">
                             {item.heading && (
-                                <h4 className="text-white font-bold text-xs mb-1">{item.heading}</h4>
+                                <h4 className="text-white font-bold text-[18px] mb-1">{item.heading}</h4>
                             )}
-                            <p className="text-gray-200 text-xs leading-relaxed opacity-90">{item.desc}</p>
+                            <p className="text-gray-200 text-sm leading-relaxed opacity-90">{item.desc}</p>
                         </div>
                     ))}
                 </div>
@@ -112,13 +120,27 @@ export default function IntroContent() {
     ];
 
     return (
-        <div className="w-full h-full flex flex-col items-center justify-center gap-6 md:gap-8 pt-10 pb-4">
-            {/* Staggered Text Effect */}
-            <div className="w-full max-w-6xl px-4 flex items-center justify-center shrink-0">
-                <HeroTextEffect />
+        <div className="w-full h-full flex flex-col items-center justify-center gap-6 md:gap-8 pt-4 pb-4">
+            {/* Hero Text with TextDisperse */}
+            <div className="w-full max-w-6xl px-4 flex items-center justify-center shrink-0 mb-8 md:mb-12">
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
+                    {heroWords.map((word, idx) => (
+                        <TextDisperse
+                            key={idx}
+                            className="text-4xl md:text-5xl text-white"
+                            style={{
+                                fontFamily: "'Noto Sans KR', sans-serif",
+                                fontWeight: word.fontWeight,
+                                letterSpacing: "0.05em",
+                            }}
+                        >
+                            {word.text}
+                        </TextDisperse>
+                    ))}
+                </div>
             </div>
 
-            {/* Card Carousel with reduced height constraint */}
+            {/* Card Carousel */}
             <div className="w-full max-w-[1200px] px-4 flex-1 min-h-0 flex flex-col justify-start">
                 <InteractiveSelector options={options} />
             </div>

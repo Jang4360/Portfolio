@@ -11,10 +11,36 @@ const n2m = new NotionToMarkdown({ notionClient: notion });
 // Helper to transform GitHub blob URLs to raw URLs
 const transformGithubUrl = (url: string) => {
     if (!url) return '';
-    if (url.includes('github.com') && url.includes('/blob/')) {
-        return url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+    // Fix known typo in Notion URLs: protfolio -> portfolio
+    let fixed = url.replace('/protfolio/', '/portfolio/');
+    if (fixed.includes('github.com') && fixed.includes('/blob/')) {
+        return fixed.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
     }
-    return url;
+    return fixed;
+};
+
+// Helper to extract image URL from any Notion property type
+const extractImageUrl = (prop: any): string => {
+    if (!prop) return '';
+
+    // URL type property
+    if (prop.url) return prop.url;
+
+    // Files type property
+    if (prop.files && prop.files.length > 0) {
+        const file = prop.files[0];
+        if (file.type === 'file' && file.file?.url) return file.file.url;
+        if (file.type === 'external' && file.external?.url) return file.external.url;
+        if (file.file?.url) return file.file.url;
+        if (file.external?.url) return file.external.url;
+    }
+
+    // Rich text type (URL stored as text)
+    if (prop.rich_text && prop.rich_text.length > 0) {
+        return prop.rich_text[0].plain_text || '';
+    }
+
+    return '';
 };
 
 // ============================================
@@ -45,14 +71,8 @@ export async function getProjects() {
                 title = page.properties.Name.title[0].plain_text;
             }
 
-            // Logs showed CoverImage/ArchitectureImage are 'url' type, not 'files'
-            const coverUrl = page.properties.CoverImage?.url ||
-                page.properties.CoverImage?.files?.[0]?.file?.url ||
-                page.properties.CoverImage?.files?.[0]?.external?.url || '';
-
-            const archUrl = page.properties.ArchitectureImage?.url ||
-                page.properties.ArchitectureImage?.files?.[0]?.file?.url ||
-                page.properties.ArchitectureImage?.files?.[0]?.external?.url || '';
+            const coverUrl = extractImageUrl(page.properties.CoverImage);
+            const archUrl = extractImageUrl(page.properties.ArchitectureImage);
 
             return {
                 id: page.id,

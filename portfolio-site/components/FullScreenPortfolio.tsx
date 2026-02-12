@@ -20,9 +20,42 @@ interface FullScreenPortfolioProps {
     sections: Section[];
 }
 
+const socialLinks = [
+    {
+        name: "GitHub",
+        icon: "/images/icon/github.svg",
+        url: "https://github.com/Jang4360",
+        type: "link" as const,
+    },
+    {
+        name: "Tistory",
+        icon: "/images/icon/tistory.svg",
+        url: "https://yoon4360.tistory.com/",
+        type: "link" as const,
+    },
+    {
+        name: "Gmail",
+        icon: "/images/icon/gmail.svg",
+        url: "jooyoon4360@gmail.com",
+        type: "clipboard" as const,
+    },
+];
+
 export default function FullScreenPortfolio({ sections }: FullScreenPortfolioProps) {
     const total = sections.length;
     const [activeIndex, setActiveIndex] = useState(0);
+    const [copiedEmail, setCopiedEmail] = useState(false);
+
+    const handleSocialClick = (item: typeof socialLinks[0]) => {
+        if (item.type === "clipboard") {
+            navigator.clipboard.writeText(item.url).then(() => {
+                setCopiedEmail(true);
+                setTimeout(() => setCopiedEmail(false), 2000);
+            });
+        } else {
+            window.open(item.url, "_blank", "noopener,noreferrer");
+        }
+    };
 
     const containerRef = useRef<HTMLDivElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -163,6 +196,35 @@ export default function FullScreenPortfolio({ sections }: FullScreenPortfolioPro
                     >
                         Jang Jooyoon
                     </motion.h1>
+
+                    {/* Social Icons */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.4 }}
+                        className="flex items-center gap-3"
+                    >
+                        {socialLinks.map((item) => (
+                            <button
+                                key={item.name}
+                                onClick={() => handleSocialClick(item)}
+                                className="relative group cursor-pointer"
+                                title={item.type === "clipboard" ? `Copy: ${item.url}` : item.name}
+                            >
+                                <img
+                                    src={item.icon}
+                                    alt={item.name}
+                                    className="w-8 h-8 transition-transform duration-300 ease-out group-hover:scale-125"
+                                    style={{ filter: "brightness(0) invert(1)", opacity: 0.7 }}
+                                />
+                                {item.type === "clipboard" && copiedEmail && (
+                                    <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] bg-white/10 backdrop-blur-md text-white px-2 py-0.5 rounded">
+                                        Copied!
+                                    </span>
+                                )}
+                            </button>
+                        ))}
+                    </motion.div>
                 </header>
 
                 {/* Right Side Labels */}
@@ -172,8 +234,8 @@ export default function FullScreenPortfolio({ sections }: FullScreenPortfolioPro
                             key={`right-${section.id}`}
                             onClick={() => handleLabelClick(i)}
                             className={`flex items-center gap-2.5 text-xs font-extrabold uppercase transition-all duration-500 cursor-pointer ${i === activeIndex
-                                    ? "text-white -translate-x-1"
-                                    : "text-white/25 hover:text-white/40"
+                                ? "text-white -translate-x-1"
+                                : "text-white/25 hover:text-white/40"
                                 }`}
                             style={{ letterSpacing: "0.15em" }}
                         >
