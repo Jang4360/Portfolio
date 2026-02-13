@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiGithub } from 'react-icons/fi';
+// Unused imports removed
 import ReactMarkdown from 'react-markdown';
 
 interface Project {
@@ -28,13 +29,53 @@ interface ProjectModalProps {
 
 type Tab = 'features' | 'troubleshooting' | 'architecture';
 
+// Map heading keywords to icons and accent colors
+// function getHeadingMeta removed
+
 export default function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
     const [activeTab, setActiveTab] = useState<Tab>('features');
+    const [freshImages, setFreshImages] = useState<{ coverImage: string; architectureImage: string } | null>(null);
+
+    const refreshImages = useCallback(async () => {
+        if (!project?.id) return;
+        try {
+            const timestamp = Date.now();
+            const res = await fetch(`/api/project-images?pageId=${project.id}&t=${timestamp}`);
+            if (res.ok) {
+                const data = await res.json();
+                // Append timestamp to image URLs to bypass browser/CDN cache
+                // Check if URL already has query params
+                const appendTimestamp = (url: string) => {
+                    if (!url) return '';
+                    const separator = url.includes('?') ? '&' : '?';
+                    return `${url}${separator}t=${timestamp}`;
+                };
+
+                if (data.coverImage || data.architectureImage) {
+                    setFreshImages({
+                        coverImage: appendTimestamp(data.coverImage),
+                        architectureImage: appendTimestamp(data.architectureImage)
+                    });
+                }
+            }
+        } catch { /* silently fail */ }
+    }, [project?.id]);
+
+    useEffect(() => {
+        if (isOpen && project?.id) {
+            setFreshImages(null);
+            setActiveTab('features');
+            refreshImages();
+        }
+    }, [isOpen, project?.id, refreshImages]);
+
+    const coverImage = freshImages?.coverImage || project.coverImage;
+    const architectureImage = freshImages?.architectureImage || project.architectureImage;
 
     const tabContent = {
         features: project.features,
         troubleshooting: project.troubleshooting,
-        architecture: null, // Handled separately
+        architecture: null,
     };
 
     const tabs = [
@@ -42,6 +83,56 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
         { id: 'troubleshooting' as Tab, label: 'Troubleshooting' },
         { id: 'architecture' as Tab, label: 'Architecture Diagram' },
     ];
+
+    const markdownComponents = useMemo(() => ({
+        h1: ({ ...props }: any) => (
+            <div className="mt-4 mb-5">
+                <h1 className="text-2xl font-bold text-white" {...props} />
+                <div className="mt-2 h-[1px] bg-gradient-to-r from-white/20 to-transparent" />
+            </div>
+        ),
+        h2: ({ ...props }: any) => (
+            <div className="mt-8 mb-4">
+                <h2 className="text-xl font-bold text-white mb-2" {...props} />
+                <div className="h-[1px] bg-gradient-to-r from-white/15 via-white/[0.06] to-transparent" />
+            </div>
+        ),
+        h3: ({ ...props }: any) => (
+            <div className="mt-6 mb-3">
+                <h3 className="text-lg font-bold text-white" {...props} />
+            </div>
+        ),
+        p: ({ ...props }: any) => (
+            <p className="text-white/70 leading-relaxed mb-3 text-sm pl-0.5" {...props} />
+        ),
+        ul: ({ ...props }: any) => (
+            <ul className="list-disc pl-5 text-white/70 mb-4 space-y-1.5 text-sm" {...props} />
+        ),
+        ol: ({ ...props }: any) => (
+            <ol className="list-decimal pl-5 text-white/70 mb-4 space-y-1.5 text-sm" {...props} />
+        ),
+        li: ({ ...props }: any) => (
+            <li className="text-white/70 leading-relaxed" {...props} />
+        ),
+        strong: ({ ...props }: any) => (
+            <strong className="text-white font-semibold" {...props} />
+        ),
+        code: ({ inline, ...props }: any) =>
+            inline ? (
+                <code className="px-1.5 py-0.5 bg-white/[0.08] rounded text-white/80 text-[13px] font-mono" {...props} />
+            ) : (
+                <code className="block p-4 bg-white/[0.04] rounded-lg text-[13px] overflow-x-auto text-white/70 font-mono border border-white/[0.06]" {...props} />
+            ),
+        blockquote: ({ ...props }: any) => (
+            <blockquote className="border-l-2 border-blue-400/40 pl-4 italic text-white/50 my-4 bg-blue-400/[0.03] py-2 rounded-r-lg" {...props} />
+        ),
+        a: ({ ...props }: any) => (
+            <a className="text-blue-400/80 hover:text-blue-300 underline underline-offset-2" {...props} />
+        ),
+        hr: () => (
+            <div className="my-6 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        ),
+    }), []);
 
     return (
         <AnimatePresence>
@@ -119,14 +210,17 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                     </div>
                                 </div>
 
-                                {/* Cover Image - Moved Here */}
-                                {project.coverImage && (
+                                {/* Cover Image */}
+                                {coverImage && (
                                     <motion.img
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        src={project.coverImage}
+                                        src={coverImage}
                                         alt={project.name}
                                         className="w-full h-auto object-cover rounded-lg shadow-lg"
+                                        onError={() => {
+                                            refreshImages();
+                                        }}
                                     />
                                 )}
                             </div>
@@ -166,12 +260,15 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                             className="prose prose-invert prose-lg max-w-none"
                                         >
                                             {activeTab === 'architecture' ? (
-                                                project.architectureImage ? (
+                                                architectureImage ? (
                                                     <div className="flex flex-col items-center">
                                                         <img
-                                                            src={project.architectureImage}
+                                                            src={architectureImage}
                                                             alt="Architecture Diagram"
                                                             className="w-full max-w-4xl rounded-lg shadow-2xl"
+                                                            onError={() => {
+                                                                refreshImages();
+                                                            }}
                                                         />
                                                     </div>
                                                 ) : (
@@ -181,47 +278,8 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                                 )
                                             ) : (
                                                 tabContent[activeTab] ? (
-                                                    <ReactMarkdown
-                                                        components={{
-                                                            h1: ({ ...props }) => (
-                                                                <h1 className="text-2xl font-bold text-white mb-4 mt-2" {...props} />
-                                                            ),
-                                                            h2: ({ ...props }) => (
-                                                                <h2 className="text-xl font-bold text-white mb-3 mt-8 pb-2 border-b border-white/[0.08]" {...props} />
-                                                            ),
-                                                            h3: ({ ...props }) => (
-                                                                <h3 className="text-lg font-bold text-white mb-2 mt-6" {...props} />
-                                                            ),
-                                                            p: ({ ...props }) => (
-                                                                <p className="text-white/70 leading-relaxed mb-3 text-sm" {...props} />
-                                                            ),
-                                                            ul: ({ ...props }) => (
-                                                                <ul className="list-disc pl-5 text-white/70 mb-4 space-y-1.5 text-sm" {...props} />
-                                                            ),
-                                                            ol: ({ ...props }) => (
-                                                                <ol className="list-decimal pl-5 text-white/70 mb-4 space-y-1.5 text-sm" {...props} />
-                                                            ),
-                                                            li: ({ ...props }) => (
-                                                                <li className="text-white/70 leading-relaxed" {...props} />
-                                                            ),
-                                                            strong: ({ ...props }) => (
-                                                                <strong className="text-white font-semibold" {...props} />
-                                                            ),
-                                                            code: ({ inline, ...props }: any) =>
-                                                                inline ? (
-                                                                    <code className="px-1.5 py-0.5 bg-white/[0.08] rounded text-white/80 text-[13px] font-mono" {...props} />
-                                                                ) : (
-                                                                    <code className="block p-4 bg-white/[0.04] rounded-lg text-[13px] overflow-x-auto text-white/70 font-mono border border-white/[0.06]" {...props} />
-                                                                ),
-                                                            blockquote: ({ ...props }) => (
-                                                                <blockquote className="border-l-2 border-white/20 pl-4 italic text-white/50 my-4" {...props} />
-                                                            ),
-                                                            a: ({ ...props }) => (
-                                                                <a className="text-blue-400/80 hover:text-blue-300 underline underline-offset-2" {...props} />
-                                                            ),
-                                                        }}
-                                                    >
-                                                        {tabContent[activeTab]}
+                                                    <ReactMarkdown components={markdownComponents}>
+                                                        {tabContent[activeTab]!}
                                                     </ReactMarkdown>
                                                 ) : (
                                                     <div className="text-center text-white/20 py-12">

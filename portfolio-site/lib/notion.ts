@@ -11,10 +11,36 @@ const n2m = new NotionToMarkdown({ notionClient: notion });
 // Helper to transform GitHub blob URLs to raw URLs
 const transformGithubUrl = (url: string) => {
     if (!url) return '';
-    if (url.includes('github.com') && url.includes('/blob/')) {
-        return url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+    // Fix known typo in Notion URLs: protfolio -> portfolio
+    let fixed = url.replace('/protfolio/', '/portfolio/');
+    if (fixed.includes('github.com') && fixed.includes('/blob/')) {
+        return fixed.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
     }
-    return url;
+    return fixed;
+};
+
+// Helper to extract image URL from any Notion property type
+const extractImageUrl = (prop: any): string => {
+    if (!prop) return '';
+
+    // URL type property
+    if (prop.url) return prop.url;
+
+    // Files type property
+    if (prop.files && prop.files.length > 0) {
+        const file = prop.files[0];
+        if (file.type === 'file' && file.file?.url) return file.file.url;
+        if (file.type === 'external' && file.external?.url) return file.external.url;
+        if (file.file?.url) return file.file.url;
+        if (file.external?.url) return file.external.url;
+    }
+
+    // Rich text type (URL stored as text)
+    if (prop.rich_text && prop.rich_text.length > 0) {
+        return prop.rich_text[0].plain_text || '';
+    }
+
+    return '';
 };
 
 // ============================================
@@ -45,14 +71,8 @@ export async function getProjects() {
                 title = page.properties.Name.title[0].plain_text;
             }
 
-            // Logs showed CoverImage/ArchitectureImage are 'url' type, not 'files'
-            const coverUrl = page.properties.CoverImage?.url ||
-                page.properties.CoverImage?.files?.[0]?.file?.url ||
-                page.properties.CoverImage?.files?.[0]?.external?.url || '';
-
-            const archUrl = page.properties.ArchitectureImage?.url ||
-                page.properties.ArchitectureImage?.files?.[0]?.file?.url ||
-                page.properties.ArchitectureImage?.files?.[0]?.external?.url || '';
+            const coverUrl = extractImageUrl(page.properties.CoverImage);
+            const archUrl = extractImageUrl(page.properties.ArchitectureImage);
 
             return {
                 id: page.id,
@@ -70,6 +90,27 @@ export async function getProjects() {
             };
         })
     );
+
+    // Sort by Period (End Date descending)
+    projects.sort((a, b) => {
+        const getEndDate = (period: string) => {
+            if (!period) return 0;
+            const parts = period.split('-').map(p => p.trim());
+            if (parts.length < 2) return 0;
+
+            const endDateStr = parts[1];
+            if (endDateStr.toLowerCase() === 'present' || endDateStr.toLowerCase() === 'now') {
+                return new Date().getTime(); // Future/Now
+            }
+
+            // Parse "YYYY.MM"
+            const [year, month] = endDateStr.split('.').map(Number);
+            if (!year || !month) return 0;
+            return new Date(year, month - 1).getTime();
+        };
+
+        return getEndDate(b.period) - getEndDate(a.period);
+    });
 
     return projects;
 }
@@ -118,17 +159,17 @@ export async function getCareer() {
         }
 
         return {
-        id: page.id,
-        title: titleText,
-        category: page.properties.Category?.select?.name || 'Other',
-        date: page.properties.Date?.rich_text?.[0]?.plain_text
-            || page.properties.Date?.date?.start
-            || '',
-        organization: page.properties.Organization?.rich_text?.[0]?.plain_text || '',
-        description: page.properties.Description?.rich_text?.[0]?.plain_text
-            || page.properties.Description?.title?.[0]?.plain_text
-            || '',
-    };
+            id: page.id,
+            title: titleText,
+            category: page.properties.Category?.select?.name || 'Other',
+            date: page.properties.Date?.rich_text?.[0]?.plain_text
+                || page.properties.Date?.date?.start
+                || '',
+            organization: page.properties.Organization?.rich_text?.[0]?.plain_text || '',
+            description: page.properties.Description?.rich_text?.[0]?.plain_text
+                || page.properties.Description?.title?.[0]?.plain_text
+                || '',
+        };
     });
 
     const grouped = {

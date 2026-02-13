@@ -4,7 +4,11 @@
       "Bash(tree:*)",
       "Bash(npm run build:*)",
       "Bash(dir:*)",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "Bash(curl:*)"
+    ],
+    "additionalDirectories": [
+      "/Users/jangjooyoon/Desktop/JooYoon/Portfolio/portfolio-site/public/images"
     ]
   }
 }
