@@ -5,7 +5,11 @@
       "Bash(npm run build:*)",
       "Bash(dir:*)",
       "Bash(npx:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm ls:*)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(npm run dev:*)"
     ],
     "additionalDirectories": [
       "/Users/jangjooyoon/Desktop/JooYoon/Portfolio/portfolio-site/public/images"

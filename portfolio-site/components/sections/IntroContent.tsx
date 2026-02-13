@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
-import { TextDisperse } from "../ui/TextDisperse";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { BlurText } from "../ui/BlurText";
 import { InteractiveSelector, SelectorOption } from "../ui/InteractiveSelector";
 import { FaServer, FaLightbulb, FaHourglassStart } from "react-icons/fa";
 
@@ -53,15 +54,14 @@ const values = [
     },
 ];
 
-const heroWords = [
-    { text: "측정", fontWeight: 900 },
-    { text: "가능한", fontWeight: 900 },
-    { text: "가치를", fontWeight: 900 },
-    { text: "만드는", fontWeight: 900 },
-    { text: "개발자", fontWeight: 900 },
-];
-
 export default function IntroContent() {
+    const [heroDone, setHeroDone] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const options: SelectorOption[] = [
         {
             title: values[0].title,
@@ -121,29 +121,36 @@ export default function IntroContent() {
 
     return (
         <div className="w-full h-full flex flex-col items-center justify-center gap-6 md:gap-8 pt-4 pb-4">
-            {/* Hero Text with TextDisperse */}
-            <div className="w-full max-w-6xl px-4 flex items-center justify-center shrink-0 mb-8 md:mb-12">
-                <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
-                    {heroWords.map((word, idx) => (
-                        <TextDisperse
-                            key={idx}
-                            className="text-4xl md:text-5xl text-white"
-                            style={{
-                                fontFamily: "'Noto Sans KR', sans-serif",
-                                fontWeight: word.fontWeight,
-                                letterSpacing: "0.05em",
-                            }}
-                        >
-                            {word.text}
-                        </TextDisperse>
-                    ))}
-                </div>
+            {/* Hero Text with BlurText Effect */}
+            <div className="w-full max-w-6xl px-4 flex items-center justify-center shrink-0 mb-4 md:mb-8">
+                {mounted && (
+                    <BlurText
+                        text="측정 가능한 가치를 만드는 개발자"
+                        delay={150}
+                        animateBy="words"
+                        direction="top"
+                        stepDuration={0.4}
+                        onAnimationComplete={() => setHeroDone(true)}
+                        className="text-4xl md:text-5xl lg:text-6xl font-black text-[#E1E1E1]"
+                        animationFrom={{ filter: 'blur(12px)', opacity: 0, y: -40 }}
+                        animationTo={[
+                            { filter: 'blur(6px)', opacity: 0.5, y: 4 },
+                            { filter: 'blur(0px)', opacity: 1, y: 0 },
+                        ]}
+                        easing={[0.25, 0.1, 0.25, 1]}
+                    />
+                )}
             </div>
 
-            {/* Card Carousel */}
-            <div className="w-full max-w-[1200px] px-4 flex-1 min-h-0 flex flex-col justify-start">
+            {/* Card Carousel with blur-in animation */}
+            <motion.div
+                className="w-full max-w-[1200px] px-4 flex-1 min-h-0 flex flex-col justify-start"
+                initial={{ filter: 'blur(10px)', opacity: 0, y: 30 }}
+                animate={heroDone ? { filter: 'blur(0px)', opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+            >
                 <InteractiveSelector options={options} />
-            </div>
+            </motion.div>
         </div>
     );
 }
